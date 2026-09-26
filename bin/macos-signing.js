@@ -128,11 +128,7 @@ export function findIntegritySlot(binaryPath) {
     if (!fs.existsSync(binaryPath)) return null;
     const data = fs.readFileSync(binaryPath);
     const offset = data.indexOf(ASAR_INTEGRITY_SENTINEL);
-    if (offset === -1) return null;
-    return {
-        offset,
-        slot: Buffer.from(data.subarray(offset, offset + 66))
-    };
+    return offset === -1 ? null : { offset };
 }
 
 export function patchMacFrameworkIntegrity(appBundle, integrityDict) {
@@ -198,75 +194,39 @@ export function ensureMacBundleBackup(asarPath, asarBackupPath) {
         );
         fs.cpSync(codeSignature, path.join(temporary, '_CodeSignature'), { recursive: true });
 
-        // Save framework binary, helper binaries, and code signatures if present
         const fw = findMacFramework(appBundle);
         if (fw) {
             const fwBackupDir = path.join(temporary, 'Framework_Backup');
             fs.mkdirSync(fwBackupDir, { recursive: true });
+            const manifest = [];
+            let counter = 0;
 
-            const slotInfo = findIntegritySlot(fw.binaryPath);
-            if (slotInfo) {
-                fs.writeFileSync(
-                    path.join(temporary, 'framework-integrity.json'),
-                    JSON.stringify({
-                        binaryRelative: path.relative(appBundle, fw.binaryPath),
-                        offset: slotInfo.offset,
-                        slotHex: slotInfo.slot.toString('hex')
-                    })
-                );
-            }
+            const addBackup = (targetPath, isDir) => {
+                const backup = `item-${counter++}`;
+                if (isDir) fs.cpSync(targetPath, path.join(fwBackupDir, backup), { recursive: true });
+                else fs.copyFileSync(targetPath, path.join(fwBackupDir, backup));
+                manifest.push({ backup, relative: path.relative(appBundle, targetPath), isDir });
+            };
 
-            const frameworkBinaryBackup = 'framework-binary';
-            fs.copyFileSync(fw.binaryPath, path.join(fwBackupDir, frameworkBinaryBackup));
+            addBackup(fw.binaryPath, false);
 
-            const fwSigList = [];
             const versionsDir = path.join(fw.frameworkPath, 'Versions');
             if (fs.existsSync(versionsDir)) {
                 for (const ver of fs.readdirSync(versionsDir)) {
                     const verPath = path.join(versionsDir, ver);
                     if (fs.lstatSync(verPath).isSymbolicLink()) continue;
                     const verSig = path.join(verPath, '_CodeSignature');
-                    if (fs.existsSync(verSig)) {
-                        const backupDir = `fw-sig-${ver}`;
-                        fs.cpSync(verSig, path.join(fwBackupDir, backupDir), { recursive: true });
-                        fwSigList.push({ relative: path.relative(appBundle, verSig), backupDir });
-                    }
+                    if (fs.existsSync(verSig)) addBackup(verSig, true);
                 }
             }
 
-            const helperList = [];
-            const helpers = findHelperApps(fw.frameworkPath);
-            for (let i = 0; i < helpers.length; i++) {
-                const helperApp = helpers[i];
-                const hExecPath = helperExecutablePath(helperApp);
-                if (!hExecPath) continue;
-
-                const binBackup = `helper-bin-${i}`;
-                fs.copyFileSync(hExecPath, path.join(fwBackupDir, binBackup));
-
-                let sigBackup = null;
-                const hSigPath = path.join(helperApp, 'Contents', '_CodeSignature');
-                if (fs.existsSync(hSigPath)) {
-                    sigBackup = `helper-sig-${i}`;
-                    fs.cpSync(hSigPath, path.join(fwBackupDir, sigBackup), { recursive: true });
-                }
-
-                helperList.push({
-                    binaryRelative: path.relative(appBundle, hExecPath),
-                    binaryBackup: binBackup,
-                    signatureRelative: path.relative(appBundle, hSigPath),
-                    signatureBackup: sigBackup
-                });
+            for (const helper of findHelperApps(fw.frameworkPath)) {
+                const execPath = helperExecutablePath(helper);
+                if (execPath) addBackup(execPath, false);
+                const sigPath = path.join(helper, 'Contents', '_CodeSignature');
+                if (fs.existsSync(sigPath)) addBackup(sigPath, true);
             }
 
-            const manifest = {
-                framework: {
-                    binaryRelative: path.relative(appBundle, fw.binaryPath),
-                    binaryBackup: frameworkBinaryBackup,
-                    signatures: fwSigList
-                },
-                helpers: helperList
-            };
             fs.writeFileSync(path.join(fwBackupDir, 'manifest.json'), JSON.stringify(manifest));
         }
 
@@ -314,60 +274,20 @@ export function restoreMacBundleBackup(asarPath, asarBackupPath) {
     const { snapshot, infoPlist, executable } = requireCompleteBackup(asarBackupPath);
     const contents = path.join(appBundle, 'Contents');
 
-    // 1. Restore framework and helper binaries and signatures if Framework_Backup exists
     const fwBackupDir = path.join(snapshot, 'Framework_Backup');
     const fwManifestPath = path.join(fwBackupDir, 'manifest.json');
     if (fs.existsSync(fwManifestPath)) {
         const manifest = JSON.parse(fs.readFileSync(fwManifestPath, 'utf8'));
-        if (manifest.framework) {
-            const fwBinSrc = path.join(fwBackupDir, manifest.framework.binaryBackup);
-            const fwBinDest = path.join(appBundle, manifest.framework.binaryRelative);
-            if (fs.existsSync(fwBinSrc)) replaceFile(fwBinSrc, fwBinDest);
-            for (const sig of manifest.framework.signatures || []) {
-                const sigSrc = path.join(fwBackupDir, sig.backupDir);
-                const sigDest = path.join(appBundle, sig.relative);
-                if (fs.existsSync(sigSrc)) replaceDirectory(sigSrc, sigDest);
-            }
-        }
-        for (const helper of manifest.helpers || []) {
-            const hBinSrc = path.join(fwBackupDir, helper.binaryBackup);
-            const hBinDest = path.join(appBundle, helper.binaryRelative);
-            if (fs.existsSync(hBinSrc)) replaceFile(hBinSrc, hBinDest);
-            if (helper.signatureBackup) {
-                const hSigSrc = path.join(fwBackupDir, helper.signatureBackup);
-                const hSigDest = path.join(appBundle, helper.signatureRelative);
-                if (fs.existsSync(hSigSrc)) replaceDirectory(hSigSrc, hSigDest);
-            }
-        }
-    } else {
-        // Fallback for older snapshots that might have slot-only or Framework_Signatures
-        const fwIntegrityPath = path.join(snapshot, 'framework-integrity.json');
-        if (fs.existsSync(fwIntegrityPath)) {
-            const { binaryRelative, offset, slotHex } = JSON.parse(fs.readFileSync(fwIntegrityPath, 'utf8'));
-            const targetBinary = path.join(appBundle, binaryRelative);
-            if (fs.existsSync(targetBinary)) {
-                const slotBuf = Buffer.from(slotHex, 'hex');
-                const fd = fs.openSync(targetBinary, 'r+');
-                try {
-                    fs.writeSync(fd, slotBuf, 0, slotBuf.length, offset);
-                } finally {
-                    fs.closeSync(fd);
-                }
-            }
-        }
-        const fwSignatures = path.join(snapshot, 'Framework_Signatures');
-        const legacyManifest = path.join(fwSignatures, 'manifest.json');
-        if (fs.existsSync(legacyManifest)) {
-            const list = JSON.parse(fs.readFileSync(legacyManifest, 'utf8'));
-            for (const item of list) {
-                const src = path.join(fwSignatures, item.backupDir);
-                const dest = path.join(appBundle, item.relative);
-                if (fs.existsSync(src)) replaceDirectory(src, dest);
+        for (const item of manifest) {
+            const src = path.join(fwBackupDir, item.backup);
+            const dest = path.join(appBundle, item.relative);
+            if (fs.existsSync(src)) {
+                if (item.isDir) replaceDirectory(src, dest);
+                else replaceFile(src, dest);
             }
         }
     }
 
-    // 2. Restore main bundle files and signature
     replaceFile(asarBackupPath, asarPath);
     replaceFile(infoPlist, path.join(contents, 'Info.plist'));
     replaceFile(
@@ -384,37 +304,18 @@ export function signMacAppBundle(appBundle) {
     const entitlements = path.join(temporary, 'runtime.plist');
     try {
         fs.writeFileSync(entitlements, RUNTIME_ENTITLEMENTS);
+        const sign = (target, ents) => run(CODESIGN, [
+            '--force', '--sign', '-', '--timestamp=none',
+            ...(ents ? ['--preserve-metadata=identifier,flags,runtime', '--entitlements', entitlements] : []),
+            target
+        ]);
+
         const fw = findMacFramework(appBundle);
         if (fw) {
-            // Sign helper apps inside-out with entitlements
-            for (const helperApp of findHelperApps(fw.frameworkPath)) {
-                run(CODESIGN, [
-                    '--force',
-                    '--sign', '-',
-                    '--timestamp=none',
-                    '--preserve-metadata=identifier,flags,runtime',
-                    '--entitlements', entitlements,
-                    helperApp
-                ]);
-            }
-            // Sign the framework bundle
-            run(CODESIGN, [
-                '--force',
-                '--sign', '-',
-                '--timestamp=none',
-                fw.frameworkPath
-            ]);
+            for (const helper of findHelperApps(fw.frameworkPath)) sign(helper, true);
+            sign(fw.frameworkPath, false);
         }
-
-        // Sign the main application bundle
-        run(CODESIGN, [
-            '--force',
-            '--sign', '-',
-            '--timestamp=none',
-            '--preserve-metadata=identifier,flags,runtime',
-            '--entitlements', entitlements,
-            appBundle
-        ]);
+        sign(appBundle, true);
     } finally {
         fs.rmSync(temporary, { recursive: true, force: true });
     }
