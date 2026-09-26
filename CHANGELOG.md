@@ -2,6 +2,21 @@
 
 All notable changes to Codex Smart RTL are documented here.
 
+## [1.6.5] - 2026-09-26
+
+### Fixed
+
+- **macOS ChatGPT 26.924+ Support**: Fixed launch crash (`Trace/BPT trap: 5`) caused by Electron's new framework-level ASAR integrity validation (#15).
+- Automatically patches the Mach-O integrity slot inside `Codex Framework` with the new archive digest.
+- Recursively signs all helper applications (`Helpers/*.app`), the framework bundle, and the main app bundle ad-hoc with `disable-library-validation`.
+- Upgraded backup and restore (`--restore`) mechanism to preserve official binaries and code signatures, allowing 100% round-trip restoration back to Apple-notarized official OpenAI signature.
+
+### Validation
+
+- `npm test` passes all 51 tests.
+- Live macOS integration test on `/Applications/ChatGPT.app` confirmed clean launch, full rendering, and round-trip restore.
+- `npm pack --dry-run` produces the publishable v1.6.5 package.
+
 ## [1.6.4] - 2026-08-28
 
 ### Added
