@@ -17,8 +17,13 @@ import {
     resolveArchiveEntryPoint
 } from '../bin/asar-utils.js';
 import {
+    ASAR_INTEGRITY_SENTINEL,
+    computeIntegrityDictionaryDigest,
     ensureMacBundleBackup,
+    findIntegritySlot,
+    findMacFramework,
     hasOfficialSignature,
+    patchMacFrameworkIntegrity,
     restoreMacBundleBackup,
     signMacAppBundle
 } from '../bin/macos-signing.js';
@@ -184,3 +189,136 @@ test('macOS signing and restore round-trip', { skip: process.platform !== 'darwi
     assert.equal(fs.readFileSync(asarPath, 'utf8'), 'original archive');
     assert.equal(fs.readFileSync(path.join(contents, 'Info.plist'), 'utf8'), originalPlist);
 });
+
+test('computeIntegrityDictionaryDigest produces expected SHA-256 for sorted dictionary', () => {
+    const dict = {
+        'Resources/app.asar': {
+            algorithm: 'SHA256',
+            hash: 'cdfebc59f4a32f4202b12bc26bbc0ff6875fec9491eb2254a5fc0b75eae48d2e'
+        }
+    };
+    const digest = computeIntegrityDictionaryDigest(dict);
+    assert.equal(digest.toString('hex'), '0f8538ec9f471984725fdf0f8a172b730176a44f8b2da515c2c7a4ff6a144028');
+});
+
+test('macOS framework integrity slot detection and patch', { skip: process.platform !== 'darwin' }, t => {
+    const root = temporaryDirectory(t);
+    const app = path.join(root, 'Fixture.app');
+    const fwDir = path.join(app, 'Contents', 'Frameworks', 'Codex Framework.framework', 'Versions', 'Current');
+    fs.mkdirSync(fwDir, { recursive: true });
+    const fwBinary = path.join(fwDir, 'Codex Framework');
+    
+    // Create a dummy binary containing the sentinel slot
+    const slot = Buffer.alloc(66);
+    ASAR_INTEGRITY_SENTINEL.copy(slot, 0);
+    slot[32] = 1; // used
+    slot[33] = 1; // version
+    Buffer.from('0f8538ec9f471984725fdf0f8a172b730176a44f8b2da515c2c7a4ff6a144028', 'hex').copy(slot, 34);
+
+    const dummyBinary = Buffer.concat([
+        Buffer.alloc(100, 0x90),
+        slot,
+        Buffer.alloc(100, 0x90)
+    ]);
+    fs.writeFileSync(fwBinary, dummyBinary);
+
+    const slotInfo = findIntegritySlot(fwBinary);
+    assert.ok(slotInfo);
+    assert.equal(slotInfo.offset, 100);
+
+    const newHash = 'ec439427833c2fd5ce6550e09df0057124ca51ea553c0f1f0427125216f5225d';
+    const patched = patchMacFrameworkIntegrity(app, {
+        'Resources/app.asar': {
+            algorithm: 'SHA256',
+            hash: newHash
+        }
+    });
+    assert.equal(patched, true);
+
+    const updatedData = fs.readFileSync(fwBinary);
+    const expectedDigest = computeIntegrityDictionaryDigest({
+        'Resources/app.asar': {
+            algorithm: 'SHA256',
+            hash: newHash
+        }
+    });
+    assert.equal(updatedData.subarray(134, 166).toString('hex'), expectedDigest.toString('hex'));
+});
+
+test('macOS framework and helper signing and restore round-trip', { skip: process.platform !== 'darwin' }, t => {
+    const root = temporaryDirectory(t);
+    const app = path.join(root, 'Fixture.app');
+    const contents = path.join(app, 'Contents');
+    const resources = path.join(contents, 'Resources');
+    const executable = path.join(contents, 'MacOS', 'Fixture');
+    const asarPath = path.join(resources, 'app.asar');
+    const backupPath = path.join(root, 'backups', 'app.asar');
+    const originalPlist = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>CFBundleExecutable</key><string>Fixture</string>
+<key>CFBundleIdentifier</key><string>dev.codex-rtl.fixture</string>
+<key>CFBundlePackageType</key><string>APPL</string>
+</dict></plist>`;
+
+    fs.mkdirSync(path.dirname(executable), { recursive: true });
+    fs.mkdirSync(resources, { recursive: true });
+    fs.mkdirSync(path.dirname(backupPath), { recursive: true });
+    fs.writeFileSync(path.join(contents, 'Info.plist'), originalPlist);
+    fs.copyFileSync('/usr/bin/true', executable);
+    fs.chmodSync(executable, 0o755);
+    fs.writeFileSync(asarPath, 'original archive');
+
+    const fwDir = path.join(contents, 'Frameworks', 'Fixture Framework.framework', 'Versions', 'A');
+    const fwCurrent = path.join(contents, 'Frameworks', 'Fixture Framework.framework', 'Versions', 'Current');
+    const fwRoot = path.join(contents, 'Frameworks', 'Fixture Framework.framework');
+    const fwHelpers = path.join(fwDir, 'Helpers', 'Helper.app', 'Contents', 'MacOS');
+    const fwResources = path.join(fwDir, 'Resources');
+    fs.mkdirSync(fwDir, { recursive: true });
+    fs.mkdirSync(fwHelpers, { recursive: true });
+    fs.mkdirSync(fwResources, { recursive: true });
+    fs.symlinkSync('A', fwCurrent);
+    fs.symlinkSync('Versions/Current/Fixture Framework', path.join(fwRoot, 'Fixture Framework'));
+    fs.symlinkSync('Versions/Current/Resources', path.join(fwRoot, 'Resources'));
+
+    const fwPlist = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>CFBundleExecutable</key><string>Fixture Framework</string>
+<key>CFBundleIdentifier</key><string>dev.codex-rtl.fixture.framework</string>
+<key>CFBundlePackageType</key><string>FMWK</string>
+</dict></plist>`;
+    fs.writeFileSync(path.join(fwResources, 'Info.plist'), fwPlist);
+
+    const helperPlist = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>CFBundleExecutable</key><string>Helper</string>
+<key>CFBundleIdentifier</key><string>dev.codex-rtl.fixture.helper</string>
+<key>CFBundlePackageType</key><string>APPL</string>
+</dict></plist>`;
+    fs.writeFileSync(path.join(fwDir, 'Helpers', 'Helper.app', 'Contents', 'Info.plist'), helperPlist);
+
+    const fwBinary = path.join(fwDir, 'Fixture Framework');
+    const helperBinary = path.join(fwHelpers, 'Helper');
+    fs.copyFileSync('/usr/bin/true', fwBinary);
+    fs.copyFileSync('/usr/bin/true', helperBinary);
+    fs.chmodSync(fwBinary, 0o755);
+    fs.chmodSync(helperBinary, 0o755);
+
+    execFileSync('/usr/bin/codesign', ['--force', '--sign', '-', path.join(fwDir, 'Helpers', 'Helper.app')]);
+    execFileSync('/usr/bin/codesign', ['--force', '--sign', '-', path.join(contents, 'Frameworks', 'Fixture Framework.framework')]);
+    execFileSync('/usr/bin/codesign', ['--force', '--sign', '-', app]);
+
+    fs.copyFileSync(asarPath, backupPath);
+    ensureMacBundleBackup(asarPath, backupPath);
+
+    fs.writeFileSync(asarPath, 'patched archive');
+    fs.appendFileSync(path.join(contents, 'Info.plist'), '\n');
+    signMacAppBundle(app);
+
+    restoreMacBundleBackup(asarPath, backupPath);
+    assert.equal(fs.readFileSync(asarPath, 'utf8'), 'original archive');
+    assert.equal(fs.readFileSync(path.join(contents, 'Info.plist'), 'utf8'), originalPlist);
+});
+

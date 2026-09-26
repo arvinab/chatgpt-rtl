@@ -23,7 +23,9 @@ import {
 import {
     assertOfficialMacAppBundle,
     ensureMacBundleBackup,
+    findMacFramework,
     getMacAppBundlePath,
+    patchMacFrameworkIntegrity,
     restoreMacBundleBackup,
     signMacAppBundle
 } from './macos-signing.js';
@@ -316,6 +318,17 @@ function setMacAsarIntegrity(asarPath, archiveWithExpectedHeader = asarPath) {
         ['-c', `Set :ElectronAsarIntegrity:Resources/app.asar:hash ${headerHash}`, infoPlist],
         { stdio: 'ignore' }
     );
+
+    const appBundle = getMacAppBundlePath(asarPath);
+    if (appBundle) {
+        patchMacFrameworkIntegrity(appBundle, {
+            'Resources/app.asar': {
+                algorithm: 'SHA256',
+                hash: headerHash
+            }
+        });
+    }
+
     return true;
 }
 
@@ -502,6 +515,10 @@ async function main() {
         fs.accessSync(path.dirname(workingAsarPath), fs.constants.W_OK);
         const infoPlist = getMacInfoPlistPath(workingAsarPath);
         if (infoPlist) fs.accessSync(infoPlist, fs.constants.W_OK);
+        if (appBundle) {
+            const fw = findMacFramework(appBundle);
+            if (fw) fs.accessSync(fw.binaryPath, fs.constants.W_OK);
+        }
         backupPath = ensureExternalBackup(workingAsarPath, manifest);
         if (appBundle) {
             if (computeAsarHeaderHash(backupPath) !== computeAsarHeaderHash(workingAsarPath)) {
