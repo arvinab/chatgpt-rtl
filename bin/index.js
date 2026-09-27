@@ -47,7 +47,7 @@ function getArgValue(name) {
 
 function printBanner() {
     try {
-        const fullArt = figlet.textSync('Codex RTL', { font: 'RubiFont' }).split('\n');
+        const fullArt = figlet.textSync('ChatGPT RTL', { font: 'RubiFont' }).split('\n');
 
         // Hex colors for the multi-color gradient
         const hexColors = [
@@ -76,7 +76,6 @@ function printBanner() {
                 const char = text[i];
                 if (char === ' ' || char === '\n') {
                     result += char;
-                    continue;
                 }
                 const factor = len > 1 ? i / (len - 1) : 0;
                 
@@ -104,10 +103,10 @@ function printBanner() {
             console.log(applyGradient(line));
         }
         console.log('');
-        console.log(`\x1b[2m  RTL & UI Patcher for ChatGPT / Codex | ${pkg.version}\x1b[0m\n`);
+        console.log(`\x1b[2m  RTL & UI Patcher for ChatGPT | ${pkg.version}\x1b[0m\n`);
     } catch (err) {
         // Fallback banner in case figlet has issues loading
-        console.log(bold(cyan(`\n✨ Codex Smart RTL Patcher v${pkg.version}\n`)));
+        console.log(bold(cyan(`\n✨ ChatGPT Smart RTL Patcher v${pkg.version}\n`)));
     }
 }
 
@@ -117,7 +116,7 @@ function handleMacPermissionError(err) {
     if (os.platform() === 'darwin') {
         console.error(yellow('\nOn macOS, you can either:'));
         console.error(yellow('  1. Grant your terminal "App Management" permission to run without sudo.'));
-        console.error(yellow('  2. Or, run this command with sudo (e.g. sudo npx codex-rtl)'));
+        console.error(yellow('  2. Or, run this command with sudo (e.g. sudo npx chatgpt-rtl)'));
         console.log(blue('\nOpening System Settings directly to App Management for you...'));
         try {
             execSync('open "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_AppBundles"');
@@ -624,7 +623,7 @@ try {
             if (typeof message === 'string' && message.startsWith('SAVE_RTL_CONFIG|')) {
                 try {
                     const data = message.substring('SAVE_RTL_CONFIG|'.length);
-                    const configPath = require('path').join(require('os').homedir(), '.codex-rtl.json');
+                    const configPath = require('path').join(require('os').homedir(), '.chatgpt-rtl.json');
                     require('fs').writeFileSync(configPath, data);
                 } catch (e) {}
             }
@@ -654,7 +653,9 @@ try {
                 // Read config
                 let rtlConfig = { faFont: '', enFont: '', codeFont: '', lh: '1.6', isRTL: true, forceRTL: false, fixAtSign: true };
                 try {
-                    const configPath = path.join(require('os').homedir(), '.codex-rtl.json');
+                    const primaryConfig = path.join(require('os').homedir(), '.chatgpt-rtl.json');
+                    const legacyConfig = path.join(require('os').homedir(), '.codex-rtl.json');
+                    const configPath = fs.existsSync(primaryConfig) ? primaryConfig : legacyConfig;
                     if (fs.existsSync(configPath)) {
                         const cfg = JSON.parse(fs.readFileSync(configPath, 'utf8'));
                         rtlConfig = { ...rtlConfig, ...cfg };
@@ -768,7 +769,7 @@ try {
             }
         } else {
             console.log(green('\n✨ RTL Features and DevTools have been enabled. Please restart ChatGPT/Codex to see the changes.\n'));
-            console.log(yellow('💡 Tip: To install official app updates in the future, run "npx codex-rtl --restore", update the app, then re-patch.\n'));
+            console.log(yellow('💡 Tip: To install official app updates in the future, run "npx chatgpt-rtl --restore", update the app, then re-patch.\n'));
         }
     } catch (e) {
         spinner.fail('Failed to repack ASAR.');

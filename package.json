@@ -1,9 +1,10 @@
 {
-  "name": "codex-rtl",
-  "version": "1.6.5",
-  "description": "A smart RTL (Right-to-Left) patcher with UI settings for the ChatGPT/Codex desktop application.",
+  "name": "chatgpt-rtl",
+  "version": "1.7.0",
+  "description": "A smart RTL (Right-to-Left) and UI patcher with font & layout controls for ChatGPT desktop application.",
   "main": "./bin/index.js",
   "bin": {
+    "chatgpt-rtl": "bin/index.js",
     "codex-rtl": "bin/index.js"
   },
   "files": [
@@ -18,24 +19,28 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mmnaderi/codex-rtl.git"
+    "url": "git+https://github.com/mmnaderi/chatgpt-rtl.git"
   },
   "keywords": [
+    "chatgpt",
+    "chatgpt-desktop",
+    "chatgpt-rtl",
     "codex",
     "rtl",
     "persian",
     "arabic",
     "hebrew",
     "patcher",
+    "vazirmatn",
     "electron",
     "asar"
   ],
   "author": "mmnaderi <mmnaderi.ir@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/mmnaderi/codex-rtl/issues"
+    "url": "https://github.com/mmnaderi/chatgpt-rtl/issues"
   },
-  "homepage": "https://github.com/mmnaderi/codex-rtl#readme",
+  "homepage": "https://github.com/mmnaderi/chatgpt-rtl#readme",
   "dependencies": {
     "@electron/asar": "^4.2.0",
     "figlet": "^1.11.0",

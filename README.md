@@ -1,13 +1,13 @@
 <a id="english"></a>
-# ChatGPT/Codex Smart RTL & UI Patcher
+# ChatGPT Smart RTL & UI Patcher
 
 **English** · [فارسی](#persian) · [العربية](#arabic)
 
-A smart RTL (Right-to-Left) patcher for the ChatGPT desktop app with Codex, as well as legacy standalone Codex installations. It brings polished support for Persian (Farsi), Arabic, Hebrew, and other RTL languages.
+A smart RTL (Right-to-Left) patcher for the official ChatGPT desktop application (including integrated coding/Codex features and legacy standalone installations). It brings polished support for Persian (Farsi), Arabic, Hebrew, and other RTL languages.
 
-![ChatGPT/Codex Smart RTL Screenshot](codex-rtl-screenshot.png)
+![ChatGPT Smart RTL Screenshot](codex-rtl-screenshot.png)
 
-Codex Smart RTL injects an RTL engine into the app, fixes mixed-direction typing issues, and adds a small settings panel for fonts, line height, and layout preferences.
+ChatGPT Smart RTL injects an RTL engine into the app, fixes mixed-direction typing issues, and adds a small settings panel for fonts, line height, and layout preferences.
 
 ## Features
 
@@ -18,13 +18,13 @@ Codex Smart RTL injects an RTL engine into the app, fixes mixed-direction typing
 - **Persian Keyboard Fix**: Maps `Shift + 2` to type `@` instead of `٬` on Persian keyboards.
 - **Beautiful Settings Panel**: A floating, non-intrusive UI widget at the bottom right corner.
 - **Vazirmatn Built-in**: Comes with the beautiful Vazirmatn variable font by default.
-- **Theme Compatibility**: Seamlessly adapts colors based on Codex's active theme, using native color variables.
+- **Theme Compatibility**: Seamlessly adapts colors based on ChatGPT's active theme, using native color variables.
 
 ## Installation
 
 You don't need to download any files manually. Install Node.js first, then run the command for your operating system.
 
-The patcher automatically checks `~/Applications` and `/Applications` for the current `ChatGPT.app` Codex bundle and falls back to a legacy `Codex.app`. `ChatGPT Classic.app` is not a patch target because it does not use an Electron `app.asar` archive.
+The patcher automatically checks `~/Applications` and `/Applications` for the current `ChatGPT.app` bundle and falls back to a legacy `Codex.app`. `ChatGPT Classic.app` is not a patch target because it does not use an Electron `app.asar` archive.
 
 ### macOS
 Before running the patcher, make sure [Node.js](https://nodejs.org) is installed. You can install it from the official website, or if you already use Homebrew:
@@ -33,12 +33,14 @@ brew install node
 ```
 Simply run:
 ```bash
-npx codex-rtl
+npx chatgpt-rtl
 ```
-Quit ChatGPT/Codex before running the command. To patch a non-standard installation explicitly:
+*(The legacy alias `npx codex-rtl` is also fully supported)*
+
+Quit ChatGPT before running the command. To patch a non-standard installation explicitly:
 
 ```bash
-npx codex-rtl --asar "/full/path/to/app.asar"
+npx chatgpt-rtl --asar "/full/path/to/app.asar"
 ```
 
 > **First time?** If you get a "Permission Denied" error, the tool will **automatically open** the App Management settings page for you. Just enable the toggle for your terminal app, then run the command again. No `sudo` needed!
@@ -48,25 +50,25 @@ npx codex-rtl --asar "/full/path/to/app.asar"
 ### Linux
 ```bash
 sudo apt install nodejs npm # Skip this line if Node.js is already installed.
-sudo npx codex-rtl
+sudo npx chatgpt-rtl
 ```
 
 ### Windows
 Open **PowerShell** as **Administrator** (Right-click -> Run as Administrator), then run:
 ```powershell
 winget install OpenJS.NodeJS.LTS # Skip this line if Node.js is already installed.
-npx codex-rtl
+npx chatgpt-rtl
 ```
 
 > [!WARNING]
-> **App Updates:** To install official ChatGPT/Codex updates, first run `npx codex-rtl --restore`, update the application inside ChatGPT/Codex, and then re-run `npx codex-rtl` to re-apply the RTL patch. (Patched Electron apps use ad-hoc signatures for ASAR integrity, which macOS Sparkle updater requires restoring before accepting official updates).
+> **App Updates:** To install official ChatGPT updates, first run `npx chatgpt-rtl --restore`, update the application inside ChatGPT, and then re-run `npx chatgpt-rtl` to re-apply the RTL patch. (Patched Electron apps use ad-hoc signatures for ASAR integrity, which macOS Sparkle updater requires restoring before accepting official updates).
 
 ## Restoring to Original (Uninstall)
 
-If you ever want to revert ChatGPT/Codex back to its original state (before the patch), quit the app and run the command with the `--restore` flag:
+If you ever want to revert ChatGPT back to its original state (before the patch), quit the app and run the command with the `--restore` flag:
 
 ```bash
-npx codex-rtl --restore
+npx chatgpt-rtl --restore
 ```
 *(On Linux, run with `sudo`. On Windows, run in an Administrator terminal)*
 
@@ -99,7 +101,7 @@ npm test        # rebuild, then run unit + jsdom payload smoke tests
 
 ## Contributing
 
-Feel free to open issues or submit pull requests. Let's make Codex accessible and beautiful for everyone!
+Feel free to open issues or submit pull requests. Let's make ChatGPT accessible and beautiful for everyone!
 
 ---
 
@@ -107,13 +109,13 @@ Feel free to open issues or submit pull requests. Let's make Codex accessible an
 
 <div dir="rtl">
 
-# اصلاح‌کنندهٔ هوشمند راست‌به‌چپ در ChatGPT/Codex
+# اصلاح‌کنندهٔ هوشمند راست‌به‌چپ در ChatGPT
 
 [English](#english) · **فارسی** · [العربية](#arabic)
 
-یک پچر هوشمند راست‌به‌چپ (RTL) برای اپ جدید ChatGPT که Codex در آن ادغام شده است، و نسخه‌های مستقل قدیمی Codex؛ با پشتیبانی از فارسی، عربی، عبری و دیگر زبان‌های RTL.
+یک پچر هوشمند راست‌به‌چپ (RTL) برای اپ جدید ChatGPT (که Codex در آن ادغام شده است) و نسخه‌های قدیمی؛ با پشتیبانی از فارسی، عربی، عبری و دیگر زبان‌های RTL.
 
-Codex Smart RTL یک موتور RTL را به برنامه تزریق می‌کند، مشکل تایپ و نمایش متن‌های ترکیبی راست‌به‌چپ/چپ‌به‌راست را بهتر مدیریت می‌کند، و یک پنل کوچک برای تنظیم فونت، فاصلهٔ خطوط و چیدمان در اختیار شما می‌گذارد.
+ChatGPT Smart RTL یک موتور RTL را به برنامه تزریق می‌کند، مشکل تایپ و نمایش متن‌های ترکیبی راست‌به‌چپ/چپ‌به‌راست را بهتر مدیریت می‌کند، و یک پنل کوچک برای تنظیم فونت، فاصلهٔ خطوط و چیدمان در اختیار شما می‌گذارد.
 
 ## امکانات
 
@@ -124,7 +126,7 @@ Codex Smart RTL یک موتور RTL را به برنامه تزریق می‌ک�
 - **حل مشکل کیبورد فارسی**: این ابزار کلید ترکیبی `Shift + 2` روی کیبورد فارسی را اصلاح می‌کند تا به جای «٬» علامت `@` تایپ شود.
 - **پنل تنظیمات زیبا**: تمام این تنظیمات در یک ویجتِ کوچک، مدرن و شناور در پایینِ صفحه قرار گرفته‌اند.
 - **فونت وزیرمتن**: فونت زیبای Vazirmatn Variable به صورت پیش‌فرض در این افزونه گنجانده شده است.
-- **همگام‌سازی خودکار با تم (Theme Compatibility)**: هماهنگی و تغییر پویای رنگ سوییچ‌های پنل با تغییر تم رنگی Codex به صورت کاملاً بومی.
+- **همگام‌سازی خودکار با تم (Theme Compatibility)**: هماهنگی و تغییر پویای رنگ سوییچ‌های پنل با تغییر تم رنگی ChatGPT به صورت کاملاً بومی.
 
 ## آموزش نصب
 
@@ -139,12 +141,12 @@ brew install node
 ```
 کافیست دستور زیر را اجرا کنید:
 ```bash
-npx codex-rtl
+npx chatgpt-rtl
 ```
-پیش از اجرا، ChatGPT/Codex را کاملاً ببندید. برای مسیر غیرمعمول:
+پیش از اجرا، ChatGPT را کاملاً ببندید. برای مسیر غیرمعمول:
 
 ```bash
-npx codex-rtl --asar "/full/path/to/app.asar"
+npx chatgpt-rtl --asar "/full/path/to/app.asar"
 ```
 
 > **اولین بار؟** اگر خطای Permission Denied دریافت کردید، ابزار به صورت **خودکار** صفحهٔ تنظیمات App Management را برای شما باز می‌کند. فقط سوئیچ ترمینال خود (مثلاً Terminal، iTerm2 یا VS Code) را فعال کنید و دوباره دستور را اجرا کنید. نیازی به `sudo` نیست!
@@ -154,25 +156,25 @@ npx codex-rtl --asar "/full/path/to/app.asar"
 ### در لینوکس
 ```bash
 sudo apt install nodejs npm # اگر Node.js از قبل نصب است، این خط را رد کنید.
-sudo npx codex-rtl
+sudo npx chatgpt-rtl
 ```
 
 ### در ویندوز
 برنامهٔ **PowerShell** را در حالت **Administrator** (راست‌کلیک -> Run as Administrator) باز کنید و دستور زیر را بنویسید:
 ```powershell
 winget install OpenJS.NodeJS.LTS # اگر Node.js از قبل نصب است، این خط را رد کنید.
-npx codex-rtl
+npx chatgpt-rtl
 ```
 
 > [!WARNING]
-> **به‌روزرسانی برنامه:** برای دریافت و نصب آپدیت‌های رسمی ChatGPT/Codex، ابتدا دستور `npx codex-rtl --restore` را اجرا کنید، سپس نرم‌افزار را از داخل برنامه آپدیت کرده و مجدداً `npx codex-rtl` را برای اعمال پچ بزنید. (به دلیل تغییر کدهای داخلی و الزام امنیتی امضای دیجیتال اپل، سیستم آپدیت Sparkle تا زمان بازگردانی امضای اصلی اجازهٔ آپدیت نمی‌دهد).
+> **به‌روزرسانی برنامه:** برای دریافت و نصب آپدیت‌های رسمی ChatGPT، ابتدا دستور `npx chatgpt-rtl --restore` را اجرا کنید، سپس نرم‌افزار را از داخل برنامه آپدیت کرده و مجدداً `npx chatgpt-rtl` را برای اعمال پچ بزنید. (به دلیل تغییر کدهای داخلی و الزام امنیتی امضای دیجیتال اپل، سیستم آپدیت Sparkle تا زمان بازگردانی امضای اصلی اجازهٔ آپدیت نمی‌دهد).
 
 ## بازگردانی به حالت اولیه (Uninstall)
 
-اگر زمانی خواستید ChatGPT/Codex را به حالتِ اولیه برگردانید، اپ را ببندید و دستور زیر را اجرا کنید:
+اگر زمانی خواستید ChatGPT را به حالتِ اولیه برگردانید، اپ را ببندید و دستور زیر را اجرا کنید:
 
 ```bash
-npx codex-rtl --restore
+npx chatgpt-rtl --restore
 ```
 *(در لینوکس با `sudo` اجرا کنید. کاربران ویندوز این دستور را در یک ترمینال ادمین اجرا کنند)*
 
@@ -197,13 +199,13 @@ npx codex-rtl --restore
 
 <div dir="rtl">
 
-# مُصحِّح ChatGPT/Codex الذكي لدعم الكتابة من اليمين إلى اليسار
+# مُصحِّح ChatGPT الذكي لدعم الكتابة من اليمين إلى اليسار
 
 [English](#english) · [فارسی](#persian) · **العربية**
 
 مُصحِّح ذكي لدعم الكتابة من اليمين إلى اليسار (RTL) لتطبيق ChatGPT لسطح المكتب المدمج مع Codex، وكذلك نسخ Codex المستقلة القديمة؛ يجلب دعمًا متقنًا للعربية والفارسية والعبرية وغيرها من اللغات التي تُكتب من اليمين إلى اليسار.
 
-يقوم Codex Smart RTL بحقن محرك RTL داخل التطبيق، ويعالج مشكلات الكتابة المختلطة الاتجاه، ويُصحِّح أزرار التحكم الأصلية بالنافذة على أنظمة RTL، ويضيف لوحة إعدادات صغيرة للخطوط وارتفاع السطر والتخطيط.
+يقوم ChatGPT Smart RTL بحقن محرك RTL داخل التطبيق، ويعالج مشكلات الكتابة المختلطة الاتجاه، ويُصحِّح أزرار التحكم الأصلية بالنافذة على أنظمة RTL، ويضيف لوحة إعدادات صغيرة للخطوط وارتفاع السطر والتخطيط.
 
 ## المميزات
 
@@ -228,41 +230,41 @@ npx codex-rtl --restore
 ### ماك (macOS)
 ```bash
 brew install node   # إن لم يكن Node.js مثبَّتًا
-npx codex-rtl
+npx chatgpt-rtl
 ```
-أغلق ChatGPT/Codex قبل تشغيل الأمر. ولتصحيح مسار غير قياسي صراحةً:
+أغلق ChatGPT قبل تشغيل الأمر. ولتصحيح مسار غير قياسي صراحةً:
 ```bash
-npx codex-rtl --asar "/full/path/to/app.asar"
+npx chatgpt-rtl --asar "/full/path/to/app.asar"
 ```
 > إذا ظهر خطأ "Permission Denied"، ستفتح الأداة صفحة App Management تلقائيًا؛ فعِّل مفتاح الطرفية ثم أعد المحاولة. لا حاجة إلى `sudo`.
 
 ### لينكس (Linux)
 ```bash
 sudo apt install nodejs npm   # تجاوزه إن كان مثبَّتًا
-sudo npx codex-rtl
+sudo npx chatgpt-rtl
 ```
 
 ### ويندوز (Windows)
 افتح **PowerShell** بصلاحيات **المسؤول**، ثم شغِّل:
 ```powershell
 winget install OpenJS.NodeJS.LTS   # تجاوزه إن كان مثبَّتًا
-npx codex-rtl
+npx chatgpt-rtl
 ```
 
 > [!WARNING]
-> **تحديثات التطبيق:** لتثبيت تحديثات ChatGPT/Codex الرسمية، شغِّل أولًا `npx codex-rtl --restore`، ثم قم بتحديث التطبيق من داخله، وأعد تشغيل `npx codex-rtl` لإعادة تطبيق التصحیح. (يتطلب نظام تحديث Sparkle استعادة التوقيع الرسمي الأصلي قبل قبول التحديثات الرسمية).
+> **تحديثات التطبيق:** لتثبيت تحديثات ChatGPT الرسمية، شغِّل أولًا `npx chatgpt-rtl --restore`، ثم قم بتحديث التطبيق من داخله، وأعد تشغيل `npx chatgpt-rtl` لإعادة تطبيق التصحیح. (يتطلب نظام تحديث Sparkle استعادة التوقيع الرسمي الأصلي قبل قبول التحديثات الرسمية).
 
 ## الاستعادة إلى الحالة الأصلية (إلغاء التثبيت)
 
 أغلق التطبيق ثم شغِّل الأمر مع الراية `--restore`:
 ```bash
-npx codex-rtl --restore
+npx chatgpt-rtl --restore
 ```
 *(على لينكس شغِّله مع `sudo`، وعلى ويندوز في طرفية بصلاحيات المسؤول)*
 
 ## كيف تعمل الأداة؟
 
-1. تحدِّد مكان تثبيت ChatGPT/Codex أو Codex القديم.
+1. تحدِّد مكان تثبيت ChatGPT أو Codex القديم.
 2. تحفظ نسخة احتياطية مُؤرَّخة خارج حزمة التطبيق المُوقَّعة في `~/.codex-rtl/backups/`.
 3. تقرأ نقطة دخول Electron الحقيقية من `package.json` بدل افتراض اسم ملف ثابت.
 4. تحافظ على بيانات `app.asar.unpacked` الأصلية أثناء حقن محرك RTL.
@@ -271,6 +273,6 @@ npx codex-rtl --restore
 
 ## المساهمة
 
-نرحّب بالمشكلات (Issues) وطلبات الدمج (Pull Requests). لنجعل Codex متاحًا وجميلًا للجميع!
+نرحّب بالمشكلات (Issues) وطلبات الدمج (Pull Requests). لنجعل ChatGPT متاحًا وجميلًا للجميع!
 
 </div>
