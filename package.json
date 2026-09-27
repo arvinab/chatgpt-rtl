@@ -1,6 +1,6 @@
 {
   "name": "chatgpt-rtl",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "A smart RTL (Right-to-Left) and UI patcher with font & layout controls for ChatGPT desktop application.",
   "main": "./bin/index.js",
   "bin": {
