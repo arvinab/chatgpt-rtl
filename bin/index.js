@@ -76,6 +76,7 @@ function printBanner() {
                 const char = text[i];
                 if (char === ' ' || char === '\n') {
                     result += char;
+                    continue;
                 }
                 const factor = len > 1 ? i / (len - 1) : 0;
                 
