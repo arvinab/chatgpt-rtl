@@ -395,8 +395,10 @@
             var codeSel = [C + 'pre', C + '.code-block__code', C + 'pre *', C + 'code *', C + 'pre span', C + 'code span', C + '[data-line] span'].join(',');
             s.textContent = [
                 prose + '{unicode-bidi:plaintext!important;text-align:start!important}',
+                // No [dir="ltr"] counterpart: the UA sheet already isolates [dir]
+                // elements, and an !important ltr rule would outrank Force RTL on
+                // English paragraphs the engine pinned to dir="ltr".
                 C + '[dir="rtl"]{direction:rtl!important;unicode-bidi:isolate!important;text-align:start!important}',
-                C + '[dir="ltr"]{direction:ltr!important;unicode-bidi:isolate!important;text-align:start!important}',
                 // Composer input (rich-text editor, lives outside the thread scroller).
                 '[contenteditable="true"] p,[data-lexical-text="true"]{unicode-bidi:plaintext!important;text-align:start!important}',
                 // Same plaintext trap in the composer: once processInput has detected
